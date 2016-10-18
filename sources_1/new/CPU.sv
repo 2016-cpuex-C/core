@@ -8,7 +8,7 @@ module CPU(
 	input logic INITIALIZE,
 	input logic START_EXEC,
 //	input logic RESTART_EXEC,
-	input logic[0:0] LED,
+	output logic[0:0] LED,
 	output logic UART_TX
 );
 
