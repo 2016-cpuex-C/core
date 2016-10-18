@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-parameter T=2604;
+//parameter T=2604;
 
 module counter_output(
 	input CLK,
