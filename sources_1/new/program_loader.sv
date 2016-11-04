@@ -6,7 +6,7 @@ module program_loader(
 	input CLK,
 	input UART_RX,
 	input needed,
-	output logic[31:0] memory_inst[MEM_INST_SIZE],
+	output logic[31:0] ins[MEM_INST_SIZE],
 	output integer pc
 );
 
@@ -26,20 +26,20 @@ always_ff @(posedge CLK) begin
 		if(already_valid) begin
 			unique case(shift_itr)
 				0 : begin
-						memory_inst[inst_itr][31:24] <= data;
+						ins[inst_itr][31:24] <= data;
 						shift_itr <= 1;
-						if (data == 8'b0) pc <= inst_itr + 1;
 					end
 				1 : begin
-						memory_inst[inst_itr][23:16] <= data;
+						ins[inst_itr][23:16] <= data;
 						shift_itr <= 2;
 					end
 				2 : begin
-						memory_inst[inst_itr][15:8] <= data;
+						ins[inst_itr][15:8] <= data;
 						shift_itr <= 3;
 					end
 				3 : begin
-						memory_inst[inst_itr][7:0] <= data;
+						ins[inst_itr][7:0] <= data;
+						if (ins[31:8] == 24'b111111111111111111111111 && data == 8'b11111111) pc <= inst_itr + 1;
 						shift_itr <= 0;
 						inst_itr <= inst_itr + 1;
 					end
