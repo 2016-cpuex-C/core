@@ -20,7 +20,7 @@ logic[31:0] regf[32];
 logic[31:0] memory[MEM_SIZE];
 logic[31:0] ins[MEM_INST_SIZE];
 integer pc;
-
+integer pc_init;
 
 parameter MODE_INITIAL = 0;
 parameter MODE_LOADER = 1;
@@ -29,32 +29,39 @@ parameter MODE_ID = 3;
 parameter MODE_EX = 4;
 parameter MODE_MEM = 5;
 parameter MODE_WB = 6;
-//typedef enum logic [5:0] {
-//	MOVE  = 6'b000001,
-//	NEG   = 6'b000010,
-//	ADD   = 6'b000011,
-//	ADDI  = 6'b000100,
-//} inst_type;
-parameter[5:0]
- MOVE  = 6'b000001,
- NEG   = 6'b000010,
- ADD   = 6'b000011,
- ADDI  = 6'b000100,
- READI = 6'b101001;
+typedef enum logic [5:0] {
+ZERO,MOVE,NEG,ADD,
+ADDI,SUB,SUBI,MULT,
+MULTI,DIV,DIVI,MOVS,
+NEGS,ADDS,SUBS,MULS,
+DIVS,SRL,SLL,LI,
+LA,LWL,LWR,LSL,
+LSR,SW,SS,BEQ,
+BNE,BLT,BGT,CEQS,
+CLES,CLTS,J,JR,
+JAL,JALR,PRINTI,PRINTF,
+PRINTC,READI,READF,SIN,
+COS,ATAN,FLOOR,SQRT,
+FTOI,ITOF,EXIT
+} inst_type;
 
 integer exec_t = 0;
 integer mode = MODE_INITIAL;
 logic need_program_load = 0;
 
-program_loader program_loader(CLK,UART_RX,need_program_load,ins,pc);
+program_loader program_loader(CLK,UART_RX,need_program_load,ins,pc_init);
 
-logic[7:0] in_data;
-logic valid;
-logic[7:0] out_data;
-logic ready;
-logic done;
-receiver receiver(CLK,UART_RX,in_data,valid);
-sender sender(CLK,out_data,ready,done,UART_TX);
+//logic[7:0] in_data;
+//logic valid;
+//logic[7:0] out_data;
+//logic ready;
+//logic done;
+//receiver receiver(CLK,UART_RX,in_data,valid);
+//sender sender(CLK,out_data,ready,done,UART_TX);
+logic[7:0] send_queue[512];
+logic[8:0] queue_s,queue_t;
+output_manager oman(CLK,send_queue,queue_t,  queue_s,UART_TX);
+
 
 logic[31:0] ir;
 logic[5:0] inst_id;
@@ -73,11 +80,13 @@ always_ff @(posedge CLK) begin
 				mode <= MODE_LOADER;
 				regi[28] <= MEM_SIZE/2;
 				LED[0] <= 0;
+				queue_t <= 0;
 			end
 			MODE_LOADER : begin
 				need_program_load <= 1;
 				if (START_EXEC) begin
-					mode <= MODE_EXEC;
+					pc <= pc_init;
+					mode <= MODE_IF;
 					need_program_load <= 0;
 				end
 			end
@@ -154,7 +163,28 @@ always_ff @(posedge CLK) begin
 //						if(valid);
 //					end
 					PRINTI : begin
-						
+						if(queue_t + 1 == queue_s) ;
+						else begin
+							case (exec_t)
+								0 : begin
+									send_queue[queue_t] <= regi[r1][31:24];
+									exec_t <= 1;
+								end
+								1 : begin
+									send_queue[queue_t] <= regi[r1][23:16];
+									exec_t <= 2;
+								end
+								2 : begin
+									send_queue[queue_t] <= regi[r1][15:8];
+									exec_t <= 3;
+								end
+								3 : begin
+									send_queue[queue_t] <= regi[r1][7:0];
+									exec_t <= 0;
+								end
+							endcase
+							queue_t <= queue_t + 1;
+						end
 					end
 				endcase
 			end

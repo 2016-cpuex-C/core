@@ -5,6 +5,7 @@ parameter T=2604;
 module CPU_tb;
 
 logic CLK,UART_RX,INITIALIZE,START_EXEC,UART_TX;
+logic[0:0] LED;
 CPU CPU(.*);
 
 logic[7:0] data[8];

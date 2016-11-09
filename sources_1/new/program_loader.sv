@@ -7,7 +7,7 @@ module program_loader(
 	input UART_RX,
 	input needed,
 	output logic[31:0] ins[MEM_INST_SIZE],
-	output integer pc
+	output integer pc_init
 );
 
 logic[7:0] data;
@@ -39,7 +39,7 @@ always_ff @(posedge CLK) begin
 					end
 				3 : begin
 						ins[inst_itr][7:0] <= data;
-						if (ins[31:8] == 24'b111111111111111111111111 && data == 8'b11111111) pc <= inst_itr + 1;
+						if (ins[inst_itr][31:8] == 24'b111111111111111111111111 && data == 8'b11111111) pc_init <= inst_itr + 1;
 						shift_itr <= 0;
 						inst_itr <= inst_itr + 1;
 					end
