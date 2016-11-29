@@ -15,7 +15,7 @@ module CPU(
 parameter MEM_SIZE = 1024;
 parameter MEM_INST_SIZE = 1024;
 
-logic[31:0] regi[32];
+logic signed [31:0] regi[32];
 logic[31:0] regf[32];
 logic[31:0] memory[MEM_SIZE];
 logic[31:0] ins[MEM_INST_SIZE];
@@ -29,6 +29,7 @@ parameter MODE_ID = 3;
 parameter MODE_EX = 4;
 parameter MODE_MEM = 5;
 parameter MODE_WB = 6;
+parameter MODE_FINISHED = 7;
 typedef enum logic [5:0] {
 ZERO,MOVE,NEG,ADD,
 ADDI,SUB,SUBI,MULT,
@@ -60,27 +61,27 @@ program_loader program_loader(CLK,UART_RX,need_program_load,ins,pc_init);
 //sender sender(CLK,out_data,ready,done,UART_TX);
 logic[7:0] send_queue[512];
 logic[8:0] queue_s,queue_t;
-output_manager oman(CLK,send_queue,queue_t,  queue_s,UART_TX);
+output_manager oman(CLK,INITIALIZE,send_queue,queue_t,  queue_s,UART_TX);
 
 
 logic[31:0] ir;
 logic[5:0] inst_id;
 logic[4:0] r1,r2,r3;
-logic[15:0] i1,i2,i3;
+logic signed [15:0] i1,i2,i3;
 
 logic finished = 0;
 
 always_ff @(posedge CLK) begin
 	if (INITIALIZE) begin
 		mode <= MODE_INITIAL;
+		regi[28] <= MEM_SIZE/2;
+		LED[0] <= 0;
+		queue_t <= 0;
 	end
 	else begin
 		unique case (mode)
 			MODE_INITIAL : begin
 				mode <= MODE_LOADER;
-				regi[28] <= MEM_SIZE/2;
-				LED[0] <= 0;
-				queue_t <= 0;
 			end
 			MODE_LOADER : begin
 				need_program_load <= 1;
@@ -94,18 +95,20 @@ always_ff @(posedge CLK) begin
 	//			LED[0] <= 1;
 				ir <= ins[pc];
 				pc <= pc+1;
+				mode <= MODE_ID;
 			end
 			MODE_ID : begin
 				inst_id <= ir[31:26];
 				r1 <= ir[25:21];
 				r2 <= ir[20:16];
 				r3 <= ir[15:11];
-//				i1 <= ir[25:10];
+				i1 <= ir[25:10];
 				i2 <= ir[20:5];
 				i3 <= ir[15:0];
 //				l1 <= ir[25:10];
 //				l2 <= ir[20:5];
 //				l3 <= ir[15:0];
+				mode <= MODE_EX;
 			end
 			MODE_EX : begin
 				case (inst_id)
@@ -157,8 +160,20 @@ always_ff @(posedge CLK) begin
 //							end
 //						endcase
 					end
-					
-
+					LWR : begin
+						regi[r1] <= memory[r2 + i3];
+						mode <= MODE_IF;
+					end
+					SW : begin
+						memory[r2 + i3] <= regi[r1];
+						mode <= MODE_IF;
+					end
+					BGT : begin
+						if (regi[r1] > regi[r2]) begin
+							pc <= i3;
+						end
+						mode <= MODE_IF;
+					end
 //					READI : begin
 //						if(valid);
 //					end
@@ -181,14 +196,21 @@ always_ff @(posedge CLK) begin
 								3 : begin
 									send_queue[queue_t] <= regi[r1][7:0];
 									exec_t <= 0;
+									mode <= MODE_IF;
 								end
 							endcase
 							queue_t <= queue_t + 1;
 						end
 					end
+					EXIT : begin
+						mode <= MODE_FINISHED;
+					end
+					default : begin
+						
+					end
 				endcase
 			end
-			
+			MODE_FINISHED : ;
 		endcase
 	end
 end
