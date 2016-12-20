@@ -1,6 +1,5 @@
 `timescale 1ns / 1ps
 
-//parameter T=2604;
 
 module CPU_top(
 	input logic CLK_P,
@@ -9,11 +8,14 @@ module CPU_top(
 	input logic INITIALIZE,
 	input logic START_EXEC,
 //	input logic RESTART_EXEC,
-	output logic[0:0] LED,
+	output logic[7:0] LED,
 	output logic UART_TX
 );
+
 logic CLK;
-IBUFGDS ibufgds(.I(CLK_P), .IB(CLK_N), .O(CLK));
+//IBUFGDS ibufgds(.I(CLK_P), .IB(CLK_N), .O(CLK));
+clk_wiz_0 genclk(CLK_P,CLK_N,CLK);
+
 
 CPU CPU(.*);
 

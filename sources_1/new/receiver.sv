@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-parameter T=2604;
+`include "global.vh"
 
 module counter_input(
 	input CLK,

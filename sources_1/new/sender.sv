@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-//parameter T=2604;
+`include "global.vh"
 
 module counter_output(
 	input CLK,
@@ -15,7 +15,7 @@ always_ff @(posedge CLK) begin
 	end
 	else begin
 		cntCLK<=cntCLK+1;
-		if(cntCLK==2584) begin
+		if(cntCLK==T-10) begin
 			cntCLK<=0;
 			cntT<=cntT+1;
 		end

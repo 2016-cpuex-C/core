@@ -1,6 +1,5 @@
 `timescale 1ns / 1ps
 
-//parameter T=2604;
 
 module CPU(
 	input logic CLK,
@@ -8,7 +7,7 @@ module CPU(
 	input logic INITIALIZE,
 	input logic START_EXEC,
 //	input logic RESTART_EXEC,
-	output logic[0:0] LED,
+	output logic[7:0] LED,
 	output logic UART_TX
 );
 
@@ -19,7 +18,7 @@ logic signed [31:0] regi[32];
 logic[31:0] regf[32];
 logic[31:0] memory[MEM_SIZE];
 logic[31:0] ins[MEM_INST_SIZE];
-integer pc;
+shortint unsigned pc;
 integer pc_init;
 
 parameter MODE_INITIAL = 0;
@@ -50,15 +49,8 @@ integer exec_t = 0;
 integer mode = MODE_INITIAL;
 logic need_program_load = 0;
 
-program_loader program_loader(CLK,UART_RX,need_program_load,ins,pc_init);
+program_loader program_loader(CLK,UART_RX,need_program_load,INITIALIZE,ins,pc_init);
 
-//logic[7:0] in_data;
-//logic valid;
-//logic[7:0] out_data;
-//logic ready;
-//logic done;
-//receiver receiver(CLK,UART_RX,in_data,valid);
-//sender sender(CLK,out_data,ready,done,UART_TX);
 logic[7:0] send_queue[512];
 logic[8:0] queue_s,queue_t;
 output_manager oman(CLK,INITIALIZE,send_queue,queue_t,  queue_s,UART_TX);
@@ -73,10 +65,13 @@ logic finished = 0;
 
 always_ff @(posedge CLK) begin
 	if (INITIALIZE) begin
-		mode <= MODE_INITIAL;
-		regi[28] <= MEM_SIZE/2;
-		LED[0] <= 0;
+//		LED[7:0] <= 0;
 		queue_t <= 0;
+		exec_t <= 0;
+		mode <= MODE_INITIAL;
+		need_program_load <= 0;
+		
+		regi[29] <= 0;
 	end
 	else begin
 		unique case (mode)
@@ -84,15 +79,18 @@ always_ff @(posedge CLK) begin
 				mode <= MODE_LOADER;
 			end
 			MODE_LOADER : begin
+//				LED[0] <= 1;
 				need_program_load <= 1;
 				if (START_EXEC) begin
 					pc <= pc_init;
+//					if(pc_init == 2) LED[2] <= 1;
+//					LED[pc_init] <= 1;
 					mode <= MODE_IF;
 					need_program_load <= 0;
 				end
 			end
 			MODE_IF : begin
-	//			LED[0] <= 1;
+//				LED[1] <= 1;
 				ir <= ins[pc];
 				pc <= pc+1;
 				mode <= MODE_ID;
@@ -161,17 +159,26 @@ always_ff @(posedge CLK) begin
 //						endcase
 					end
 					LWR : begin
-						regi[r1] <= memory[r2 + i3];
+						regi[r1] <= memory[regi[r2] + i3];
 						mode <= MODE_IF;
 					end
 					SW : begin
-						memory[r2 + i3] <= regi[r1];
+						memory[regi[r2] + i3] <= regi[r1];
 						mode <= MODE_IF;
 					end
 					BGT : begin
 						if (regi[r1] > regi[r2]) begin
 							pc <= i3;
 						end
+						mode <= MODE_IF;
+					end
+					JR : begin
+						pc <= regi[r1];
+						mode <= MODE_IF;
+					end
+					JAL : begin
+						regi[31] <= pc;
+						pc <= i1;
 						mode <= MODE_IF;
 					end
 //					READI : begin
@@ -183,18 +190,22 @@ always_ff @(posedge CLK) begin
 							case (exec_t)
 								0 : begin
 									send_queue[queue_t] <= regi[r1][31:24];
+//									LED[3] <= 1;
 									exec_t <= 1;
 								end
 								1 : begin
 									send_queue[queue_t] <= regi[r1][23:16];
+//									LED[4] <= 1;
 									exec_t <= 2;
 								end
 								2 : begin
 									send_queue[queue_t] <= regi[r1][15:8];
+//									LED[5] <= 1;
 									exec_t <= 3;
 								end
 								3 : begin
 									send_queue[queue_t] <= regi[r1][7:0];
+//									LED[6] <= 1;
 									exec_t <= 0;
 									mode <= MODE_IF;
 								end
@@ -210,7 +221,9 @@ always_ff @(posedge CLK) begin
 					end
 				endcase
 			end
-			MODE_FINISHED : ;
+			MODE_FINISHED : begin
+//				LED[7] <= 1;
+			end
 		endcase
 	end
 end
