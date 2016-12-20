@@ -49,7 +49,7 @@ integer exec_t = 0;
 integer mode = MODE_INITIAL;
 logic need_program_load = 0;
 
-program_loader program_loader(CLK,UART_RX,need_program_load,INITIALIZE,ins,pc_init);
+program_loader program_loader(CLK,UART_RX,need_program_load,INITIALIZE,LED,ins,pc_init);
 
 logic[7:0] send_queue[512];
 logic[8:0] queue_s,queue_t;
