@@ -7,9 +7,9 @@ module program_loader(
 	input UART_RX,
 	input needed,
 	input INITIALIZE,
-	output logic[7:0] LED,
 	output logic[31:0] ins[MEM_INST_SIZE],
 	output integer pc_init
+//	output logic[7:0] LED
 );
 
 logic[7:0] data;
@@ -25,6 +25,7 @@ always_ff @(posedge CLK) begin
 		already_valid <= 0;
 		inst_itr <= 0;
 		shift_itr <= 0;
+//		LED <= 0;
 	end
 	else if(needed) begin
 		if(valid) begin
@@ -34,6 +35,10 @@ always_ff @(posedge CLK) begin
 			unique case(shift_itr)
 				0 : begin
 						ins[inst_itr][31:24] <= data;
+						if(&data) begin
+							pc_init <= inst_itr + 1;
+//							LED[inst_itr + 1] <= 1;
+						end
 						shift_itr <= 1;
 					end
 				1 : begin
@@ -46,8 +51,7 @@ always_ff @(posedge CLK) begin
 					end
 				3 : begin
 						ins[inst_itr][7:0] <= data;
-						if (ins[inst_itr][31:8] == 24'b111111111111111111111111 && data == 8'b11111111) pc_init <= inst_itr + 1;
-						LED[inst_itr]<=1;
+//						LED[inst_itr]<=1;
 						shift_itr <= 0;
 						inst_itr <= inst_itr + 1;
 					end

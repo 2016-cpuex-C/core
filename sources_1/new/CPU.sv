@@ -48,13 +48,27 @@ FTOI,ITOF,EXIT
 integer exec_t = 0;
 integer mode = MODE_INITIAL;
 logic need_program_load = 0;
-
-program_loader program_loader(CLK,UART_RX,need_program_load,INITIALIZE,LED,ins,pc_init);
+program_loader program_loader(CLK,UART_RX,need_program_load,INITIALIZE,ins,pc_init);
 
 logic[7:0] send_queue[512];
 logic[8:0] queue_s,queue_t;
-output_manager oman(CLK,INITIALIZE,send_queue,queue_t,  queue_s,UART_TX);
+output_manager oman(CLK,INITIALIZE,send_queue,queue_t,  queue_s,UART_TX,LED);
 
+logic fpu_in_valid = 0;
+logic[2:0] fpu_operator;
+logic[31:0] fpu_a,fpu_b,fpu_c;
+logic fpu_result_valid;
+FPU fpu(
+	.CLK(CLK),
+	.INITIALIZE(INITIALIZE),
+	.in_valid(fpu_in_valid),
+	.operator(fpu_operator),
+	.a(fpu_a),
+	.b(fpu_b),
+
+	.result_valid(fpu_result_valid),
+	.c(fpu_c)
+);
 
 logic[31:0] ir;
 logic[5:0] inst_id;
@@ -62,6 +76,8 @@ logic[4:0] r1,r2,r3;
 logic signed [15:0] i1,i2,i3;
 
 logic finished = 0;
+
+
 
 always_ff @(posedge CLK) begin
 	if (INITIALIZE) begin
@@ -134,6 +150,28 @@ always_ff @(posedge CLK) begin
 						regi[r1] <= regi[r2] - i3;
 						mode <= MODE_IF;
 					end
+					ADDS : begin
+						unique case (exec_t)
+							0 : begin
+								fpu_a <= regf[r2];
+								fpu_b <= regf[r3];
+								fpu_operator <= 0;
+								fpu_in_valid <= 1;
+								exec_t <= 1;
+							end
+							default : begin
+								fpu_in_valid <= 0;
+								if(fpu_result_valid) begin
+									regf[r1] <= fpu_c;
+									exec_t <= 0;
+									mode <= MODE_IF;
+								end
+								else begin
+									exec_t <= exec_t + 1;
+								end
+							end
+						endcase
+					end
 					SRL : begin
 						regi[r1] <= (regi[r2] >>> i3);
 						mode <= MODE_IF;
@@ -162,8 +200,26 @@ always_ff @(posedge CLK) begin
 						regi[r1] <= memory[regi[r2] + i3];
 						mode <= MODE_IF;
 					end
+					LSL : begin
+						regf[r1] <= ins[i2];
+						mode <= MODE_IF;
+					end
+					LSR : begin
+						regf[r1] <= memory[regi[r2] + i3];
+						mode <= MODE_IF;
+					end
 					SW : begin
 						memory[regi[r2] + i3] <= regi[r1];
+						mode <= MODE_IF;
+					end
+					SS : begin
+						memory[regi[r2] + i3] <= regf[r1];
+						mode <= MODE_IF;
+					end
+					BNE : begin
+						if (regi[r1] != regi[r2]) begin
+							pc <= i3;
+						end
 						mode <= MODE_IF;
 					end
 					BGT : begin
@@ -205,6 +261,35 @@ always_ff @(posedge CLK) begin
 								end
 								3 : begin
 									send_queue[queue_t] <= regi[r1][7:0];
+//									LED[6] <= 1;
+									exec_t <= 0;
+									mode <= MODE_IF;
+								end
+							endcase
+							queue_t <= queue_t + 1;
+						end
+					end
+					PRINTF : begin
+						if(queue_t + 1 == queue_s) ;
+						else begin
+							case (exec_t)
+								0 : begin
+									send_queue[queue_t] <= regf[r1][31:24];
+//									LED[3] <= 1;
+									exec_t <= 1;
+								end
+								1 : begin
+									send_queue[queue_t] <= regf[r1][23:16];
+//									LED[4] <= 1;
+									exec_t <= 2;
+								end
+								2 : begin
+									send_queue[queue_t] <= regf[r1][15:8];
+//									LED[5] <= 1;
+									exec_t <= 3;
+								end
+								3 : begin
+									send_queue[queue_t] <= regf[r1][7:0];
 //									LED[6] <= 1;
 									exec_t <= 0;
 									mode <= MODE_IF;

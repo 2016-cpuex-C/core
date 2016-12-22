@@ -13,8 +13,17 @@ module CPU_top(
 );
 
 logic CLK;
+logic reset = 0;
+logic locked;
 //IBUFGDS ibufgds(.I(CLK_P), .IB(CLK_N), .O(CLK));
-clk_wiz_0 genclk(CLK_P,CLK_N,CLK);
+clk_wiz_0 genclk(
+	.clk_in1_p(CLK_P),
+	.clk_in1_n(CLK_N),
+	.clk_out1(CLK),
+	.reset(reset),
+	.locked(locked)
+//	.*
+);
 
 
 CPU CPU(.*);

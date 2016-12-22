@@ -15,7 +15,7 @@ always_ff @(posedge CLK) begin
 	end
 	else begin
 		cntCLK<=cntCLK+1;
-		if(cntCLK==T-10) begin
+		if(cntCLK==T-3) begin
 			cntCLK<=0;
 			cntT<=cntT+1;
 		end
@@ -28,6 +28,7 @@ module sender(
 	input logic[7:0] as,
 	input logic ready,			//can output
 	output logic done=1,			//complete sending
+	output logic done_justnow=0,
 	output logic OUT
 );
 logic proceeding=0;
@@ -40,6 +41,7 @@ always_ff @(posedge CLK) begin
 	if(~proceeding && ready) begin
 		proceeding<=1;
 		done<=0;
+		done_justnow <= 0;
 		RST<=1;
 		vals<={1'b1,as,1'b0};
 	end
@@ -59,12 +61,17 @@ always_ff @(posedge CLK) begin
 				9: OUT<=vals[9];
 				10:begin
 					proceeding<=0;
+					done_justnow <= 1;
 				   end
 			endcase
+		end
+		else begin
+			done_justnow <= 0;
 		end
 	end
 	else begin
 		done<=1;
+		done_justnow <= 0;
 		OUT<=1;
 	end
 end

@@ -11,13 +11,21 @@ module loopback_top(
 	output logic UART_TX
 );
 logic CLK;
-clk_wiz_0 genclk(CLK_P,CLK_N,CLK);
-
+logic reset = 0;
+logic locked;
+clk_wiz_0 genclk(
+	.clk_in1_p(CLK_P),
+	.clk_in1_n(CLK_N),
+	.clk_out1(CLK),
+	.reset(reset),
+	.locked(locked)
+//	.*
+);
 logic[7:0] in,out;
-logic valid,ready;
+logic valid,ready,done_justnow;
 
 receiver receiver(CLK,UART_RX,in,valid);
 loopback loopback(CLK,in,valid,done,ready,out);
-sender sender(CLK,out,ready,done,UART_TX);
+sender sender(CLK,out,ready,done,done_justnow,UART_TX);
 
 endmodule
