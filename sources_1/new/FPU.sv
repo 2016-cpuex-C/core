@@ -1,8 +1,11 @@
 
 `timescale 1ns / 1ps
 
-parameter FPU_INST = 5;
-//add,sub,
+parameter FPU_INST = 6;
+typedef enum logic [2:0] {
+NEG,ADD,SUB,MUL,
+DIV,CMP
+} inst_type;
 
 module FPU(
 	input logic CLK,
@@ -23,19 +26,73 @@ logic[31:0] results[FPU_INST];
 logic result_ready = 1;
 logic RESET = 1;	//active low
 
-//add 0
 fpu_add fadd(
 	.aclk(CLK),
 	.aresetn(RESET),
-	.s_axis_a_tvalid(in_valids[0]),
-	.s_axis_a_tready(in_readies[0][0]),
+	.s_axis_a_tvalid(in_valids[ADD]),
+	.s_axis_a_tready(in_readies[ADD][0]),
 	.s_axis_a_tdata(a),
-	.s_axis_b_tvalid(in_valids[0]),
-	.s_axis_b_tready(in_readies[0][1]),
+	.s_axis_b_tvalid(in_valids[ADD]),
+	.s_axis_b_tready(in_readies[ADD][1]),
 	.s_axis_b_tdata(b),
-	.m_axis_result_tvalid(result_valids[0]),
+	.m_axis_result_tvalid(result_valids[ADD]),
 	.m_axis_result_tready(result_ready),
-	.m_axis_result_tdata(results[0])
+	.m_axis_result_tdata(results[ADD])
+);
+
+fpu_sub fsub(
+	.aclk(CLK),
+	.aresetn(RESET),
+	.s_axis_a_tvalid(in_valids[SUB]),
+	.s_axis_a_tready(in_readies[SUB][0]),
+	.s_axis_a_tdata(a),
+	.s_axis_b_tvalid(in_valids[SUB]),
+	.s_axis_b_tready(in_readies[SUB][1]),
+	.s_axis_b_tdata(b),
+	.m_axis_result_tvalid(result_valids[SUB]),
+	.m_axis_result_tready(result_ready),
+	.m_axis_result_tdata(results[SUB])
+);
+
+fpu_mul fmul(
+	.aclk(CLK),
+	.aresetn(RESET),
+	.s_axis_a_tvalid(in_valids[MUL]),
+	.s_axis_a_tready(in_readies[MUL][0]),
+	.s_axis_a_tdata(a),
+	.s_axis_b_tvalid(in_valids[MUL]),
+	.s_axis_b_tready(in_readies[MUL][1]),
+	.s_axis_b_tdata(b),
+	.m_axis_result_tvalid(result_valids[MUL]),
+	.m_axis_result_tready(result_ready),
+	.m_axis_result_tdata(results[MUL])
+);
+
+fpu_div fdiv(
+	.aclk(CLK),
+	.aresetn(RESET),
+	.s_axis_a_tvalid(in_valids[DIV]),
+	.s_axis_a_tready(in_readies[DIV][0]),
+	.s_axis_a_tdata(a),
+	.s_axis_b_tvalid(in_valids[DIV]),
+	.s_axis_b_tready(in_readies[DIV][1]),
+	.s_axis_b_tdata(b),
+	.m_axis_result_tvalid(result_valids[DIV]),
+	.m_axis_result_tready(result_ready),
+	.m_axis_result_tdata(results[DIV])
+);
+
+fpu_neg fneg(
+	.aclk(CLK),
+	.aresetn(RESET),
+	.a_valid(in_valids[NEG]),
+	.a_data(a),
+	.c_valid(result_valids[NEG]),
+	.c_data(results[NEG])
+);
+
+fpu_cmp fcmp(
+	hogefugapiyo
 );
 
 
