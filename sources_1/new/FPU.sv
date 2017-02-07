@@ -91,9 +91,9 @@ fpu_neg fneg(
 	.c_data(results[NEG])
 );
 
-fpu_cmp fcmp(
-	hogefugapiyo
-);
+//fpu_cmp fcmp(
+//	hogefugapiyo
+//);
 
 
 always_ff @(posedge CLK) begin

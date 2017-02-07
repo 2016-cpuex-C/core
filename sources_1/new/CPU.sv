@@ -11,7 +11,7 @@ module CPU(
 	output logic UART_TX
 );
 
-parameter MEM_SIZE = 1024;
+parameter MEM_SIZE = 1<<17;
 parameter MEM_INST_SIZE = 1024;
 
 logic signed [31:0] regi[32];
@@ -126,6 +126,9 @@ always_ff @(posedge CLK) begin
 			end
 			MODE_EX : begin
 				case (inst_id)
+					ZERO : begin
+						mode <= MODE_IF;
+					end
 					MOVE : begin
 						regi[r1] <= regi[r2];
 						mode <= MODE_IF;
@@ -150,12 +153,141 @@ always_ff @(posedge CLK) begin
 						regi[r1] <= regi[r2] - i3;
 						mode <= MODE_IF;
 					end
+					MULT : begin
+						regi[r1] <= regi[r2] * regi[r3];
+						mode <= MODE_IF;
+					end
+					MULTI : begin
+						regi[r1] <= regi[r2] * i3;
+						mode <= MODE_IF;
+					end
+					DIV : begin
+						regi[r1] <= regi[r2] / regi[r3];
+						mode <= MODE_IF;
+					end
+					DIVI : begin
+						regi[r1] <= regi[r2] / i3;
+						mode <= MODE_IF;
+					end
+					MOVS : begin
+						regf[r1] <= regf[r2];
+						mode <= MODE_IF;
+					end
+					NEGS : begin
+						unique case (exec_t)
+							0 : begin
+								fpu_a <= regf[r2];
+								fpu_operator <= 0;	//NEG
+								fpu_in_valid <= 1;
+								exec_t <= 1;
+							end
+							default : begin
+								fpu_in_valid <= 0;
+								if(fpu_result_valid) begin
+									regf[r1] <= fpu_c;
+									exec_t <= 0;
+									mode <= MODE_IF;
+								end
+								else begin
+									exec_t <= exec_t + 1;
+								end
+							end
+						endcase
+					end
 					ADDS : begin
 						unique case (exec_t)
 							0 : begin
 								fpu_a <= regf[r2];
 								fpu_b <= regf[r3];
-								fpu_operator <= 0;
+								fpu_operator <= 1;	//ADD
+								fpu_in_valid <= 1;
+								exec_t <= 1;
+							end
+							default : begin
+								fpu_in_valid <= 0;
+								if(fpu_result_valid) begin
+									regf[r1] <= fpu_c;
+									exec_t <= 0;
+									mode <= MODE_IF;
+								end
+								else begin
+									exec_t <= exec_t + 1;
+								end
+							end
+						endcase
+					end
+					SUBS : begin
+						unique case (exec_t)
+							0 : begin
+								fpu_a <= regf[r2];
+								fpu_b <= regf[r3];
+								fpu_operator <= 2;	//SUB
+								fpu_in_valid <= 1;
+								exec_t <= 1;
+							end
+							default : begin
+								fpu_in_valid <= 0;
+								if(fpu_result_valid) begin
+									regf[r1] <= fpu_c;
+									exec_t <= 0;
+									mode <= MODE_IF;
+								end
+								else begin
+									exec_t <= exec_t + 1;
+								end
+							end
+						endcase
+					end
+					MULS : begin
+						unique case (exec_t)
+							0 : begin
+								fpu_a <= regf[r2];
+								fpu_b <= regf[r3];
+								fpu_operator <= 3;	//MUL
+								fpu_in_valid <= 1;
+								exec_t <= 1;
+							end
+							default : begin
+								fpu_in_valid <= 0;
+								if(fpu_result_valid) begin
+									regf[r1] <= fpu_c;
+									exec_t <= 0;
+									mode <= MODE_IF;
+								end
+								else begin
+									exec_t <= exec_t + 1;
+								end
+							end
+						endcase
+					end
+					DIVS : begin
+						unique case (exec_t)
+							0 : begin
+								fpu_a <= regf[r2];
+								fpu_b <= regf[r3];
+								fpu_operator <= 4;	//DIV
+								fpu_in_valid <= 1;
+								exec_t <= 1;
+							end
+							default : begin
+								fpu_in_valid <= 0;
+								if(fpu_result_valid) begin
+									regf[r1] <= fpu_c;
+									exec_t <= 0;
+									mode <= MODE_IF;
+								end
+								else begin
+									exec_t <= exec_t + 1;
+								end
+							end
+						endcase
+					end
+					DIVS : begin
+						unique case (exec_t)
+							0 : begin
+								fpu_a <= regf[r2];
+								fpu_b <= regf[r3];
+								fpu_operator <= 4;	//DIV
 								fpu_in_valid <= 1;
 								exec_t <= 1;
 							end
@@ -196,6 +328,10 @@ always_ff @(posedge CLK) begin
 //							end
 //						endcase
 					end
+//					LWL : begin
+//						regi[r1] <= ins[i2];
+//						mode <= MODE_IF;
+//					end
 					LWR : begin
 						regi[r1] <= memory[regi[r2] + i3];
 						mode <= MODE_IF;
@@ -216,8 +352,20 @@ always_ff @(posedge CLK) begin
 						memory[regi[r2] + i3] <= regf[r1];
 						mode <= MODE_IF;
 					end
+					BEQ : begin
+						if (regi[r1] == regi[r2]) begin
+							pc <= i3;
+						end
+						mode <= MODE_IF;
+					end
 					BNE : begin
 						if (regi[r1] != regi[r2]) begin
+							pc <= i3;
+						end
+						mode <= MODE_IF;
+					end
+					BLT : begin
+						if (regi[r1] < regi[r2]) begin
 							pc <= i3;
 						end
 						mode <= MODE_IF;
@@ -228,6 +376,14 @@ always_ff @(posedge CLK) begin
 						end
 						mode <= MODE_IF;
 					end
+					CEQS : begin
+					end
+					CLES : begin
+					end
+					CLTS : begin
+					end
+					J : begin
+					end
 					JR : begin
 						pc <= regi[r1];
 						mode <= MODE_IF;
@@ -236,6 +392,8 @@ always_ff @(posedge CLK) begin
 						regi[31] <= pc;
 						pc <= i1;
 						mode <= MODE_IF;
+					end
+					JALR : begin
 					end
 //					READI : begin
 //						if(valid);
