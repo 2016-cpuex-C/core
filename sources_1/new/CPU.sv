@@ -56,6 +56,7 @@ output_manager oman(CLK,INITIALIZE,send_queue,queue_t,  queue_s,UART_TX,LED);
 
 logic fpu_in_valid = 0;
 logic[2:0] fpu_operator;
+logic[2:0] fpu_subop;
 logic[31:0] fpu_a,fpu_b,fpu_c;
 logic fpu_result_valid;
 FPU fpu(
@@ -63,6 +64,7 @@ FPU fpu(
 	.INITIALIZE(INITIALIZE),
 	.in_valid(fpu_in_valid),
 	.operator(fpu_operator),
+	.subop(fpu_subop),
 	.a(fpu_a),
 	.b(fpu_b),
 
@@ -282,28 +284,6 @@ always_ff @(posedge CLK) begin
 							end
 						endcase
 					end
-					DIVS : begin
-						unique case (exec_t)
-							0 : begin
-								fpu_a <= regf[r2];
-								fpu_b <= regf[r3];
-								fpu_operator <= 4;	//DIV
-								fpu_in_valid <= 1;
-								exec_t <= 1;
-							end
-							default : begin
-								fpu_in_valid <= 0;
-								if(fpu_result_valid) begin
-									regf[r1] <= fpu_c;
-									exec_t <= 0;
-									mode <= MODE_IF;
-								end
-								else begin
-									exec_t <= exec_t + 1;
-								end
-							end
-						endcase
-					end
 					SRL : begin
 						regi[r1] <= (regi[r2] >>> i3);
 						mode <= MODE_IF;
@@ -328,10 +308,10 @@ always_ff @(posedge CLK) begin
 //							end
 //						endcase
 					end
-//					LWL : begin
-//						regi[r1] <= ins[i2];
-//						mode <= MODE_IF;
-//					end
+					LWL : begin	//?
+						regi[r1] <= ins[i2];
+						mode <= MODE_IF;
+					end
 					LWR : begin
 						regi[r1] <= memory[regi[r2] + i3];
 						mode <= MODE_IF;
@@ -377,12 +357,84 @@ always_ff @(posedge CLK) begin
 						mode <= MODE_IF;
 					end
 					CEQS : begin
+						unique case (exec_t)
+							0 : begin
+								fpu_a <= regf[r1];
+								fpu_b <= regf[r2];
+								fpu_operator <= 5;	//CMP
+								fpu_subop <= 3'b000;	//EQ
+								fpu_in_valid <= 1;
+								exec_t <= 1;
+							end
+							default : begin
+								fpu_in_valid <= 0;
+								if(fpu_result_valid) begin
+									if(fpu_c[0]) begin
+										pc <= i3;
+									end
+									exec_t <= 0;
+									mode <= MODE_IF;
+								end
+								else begin
+									exec_t <= exec_t + 1;
+								end
+							end
+						endcase
 					end
 					CLES : begin
+						unique case (exec_t)
+							0 : begin
+								fpu_a <= regf[r1];
+								fpu_b <= regf[r2];
+								fpu_operator <= 5;	//CMP
+								fpu_subop <= 3'b010;	//LE
+								fpu_in_valid <= 1;
+								exec_t <= 1;
+							end
+							default : begin
+								fpu_in_valid <= 0;
+								if(fpu_result_valid) begin
+									if(fpu_c[0]) begin
+										pc <= i3;
+									end
+									exec_t <= 0;
+									mode <= MODE_IF;
+								end
+								else begin
+									exec_t <= exec_t + 1;
+								end
+							end
+						endcase
 					end
 					CLTS : begin
+						unique case (exec_t)
+							0 : begin
+								fpu_a <= regf[r1];
+								fpu_b <= regf[r2];
+								fpu_operator <= 5;	//CMP
+								fpu_subop <= 3'b100;	//LT
+								fpu_in_valid <= 1;
+								exec_t <= 1;
+							end
+							default : begin
+								fpu_in_valid <= 0;
+								if(fpu_result_valid) begin
+									if(fpu_c[0]) begin
+										pc <= i3;
+									end
+									exec_t <= 0;
+									mode <= MODE_IF;
+								end
+								else begin
+									exec_t <= exec_t + 1;
+								end
+							end
+						endcase
 					end
+
 					J : begin
+						pc <= i1;
+						mode <= MODE_IF;
 					end
 					JR : begin
 						pc <= regi[r1];
@@ -394,10 +446,10 @@ always_ff @(posedge CLK) begin
 						mode <= MODE_IF;
 					end
 					JALR : begin
+						regi[31] <= pc;
+						pc <= regi[r1];
+						mode <= MODE_IF;
 					end
-//					READI : begin
-//						if(valid);
-//					end
 					PRINTI : begin
 						if(queue_t + 1 == queue_s) ;
 						else begin
@@ -456,6 +508,9 @@ always_ff @(posedge CLK) begin
 							queue_t <= queue_t + 1;
 						end
 					end
+//					READI : begin
+//						if(valid);
+//					end
 					EXIT : begin
 						mode <= MODE_FINISHED;
 					end

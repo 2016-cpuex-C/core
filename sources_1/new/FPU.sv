@@ -12,6 +12,7 @@ module FPU(
 	input logic INITIALIZE,
 	input logic in_valid,
 	input logic[2:0] operator,	//8
+	input logic[2:0] subop,		// for CMP
 	input logic[31:0] a,
 	input logic[31:0] b,
 	output logic result_valid,
@@ -91,9 +92,16 @@ fpu_neg fneg(
 	.c_data(results[NEG])
 );
 
-//fpu_cmp fcmp(
-//	hogefugapiyo
-//);
+fpu_cmp fcmp(
+	.aclk(CLK),
+	.aresetn(RESET),
+	.data_valid(in_valids[CMP]),
+	.a_data(a),
+	.b_data(b),
+	.op_data(subop),
+	.c_valid(result_valids[CMP]),
+	.c_data(results[CMP])
+);
 
 
 always_ff @(posedge CLK) begin
