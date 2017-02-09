@@ -1,10 +1,10 @@
 
 `timescale 1ns / 1ps
 
-parameter FPU_INST = 6;
+parameter FPU_INST = 7;
 typedef enum logic [2:0] {
 NEG,ADD,SUB,MUL,
-DIV,CMP
+DIV,CMP,SQRT
 } inst_type;
 
 module FPU(
@@ -78,6 +78,17 @@ fpu_div fdiv(
 	.s_axis_b_tvalid(in_valids[DIV]),
 	.s_axis_b_tready(in_readies[DIV][1]),
 	.s_axis_b_tdata(b),
+	.m_axis_result_tvalid(result_valids[DIV]),
+	.m_axis_result_tready(result_ready),
+	.m_axis_result_tdata(results[DIV])
+);
+
+fpu_sqrt fsqrt(
+	.aclk(CLK),
+	.aresetn(RESET),
+	.s_axis_a_tvalid(in_valids[DIV]),
+	.s_axis_a_tready(in_readies[DIV][0]),
+	.s_axis_a_tdata(a),
 	.m_axis_result_tvalid(result_valids[DIV]),
 	.m_axis_result_tready(result_ready),
 	.m_axis_result_tdata(results[DIV])

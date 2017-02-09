@@ -54,6 +54,20 @@ logic[7:0] send_queue[512];
 logic[8:0] queue_s,queue_t;
 output_manager oman(CLK,INITIALIZE,send_queue,queue_t,  queue_s,UART_TX,LED);
 
+parameter MEM_INPUT_SIZE = 1024;
+parameter LOG_MEM_INPUT_SIZE = 10;
+
+logic[LOG_MEM_INPUT_SIZE:0] input_valid_num;	//mem_input[0 ~ input_valid_num) is valid
+logic[31:0] mem_input[MEM_INPUT_SIZE];
+input_loader iload(
+	.CLK(CLK),
+	.UART_RX(UART_RX),
+	.INITIALIZE(INITIALIZE),
+	.queue_t(input_valid_num),
+	.mem_input(mem_input)
+);
+logic[LOG_MEM_INPUT_SIZE:0] input_read_num;		//next read index
+
 logic fpu_in_valid = 0;
 logic[2:0] fpu_operator;
 logic[2:0] fpu_subop;
@@ -88,6 +102,8 @@ always_ff @(posedge CLK) begin
 		exec_t <= 0;
 		mode <= MODE_INITIAL;
 		need_program_load <= 0;
+		input_read_num <= 0;
+		fpu_in_valid <= 0;
 		
 		regi[29] <= 0;
 	end
@@ -508,9 +524,20 @@ always_ff @(posedge CLK) begin
 							queue_t <= queue_t + 1;
 						end
 					end
-//					READI : begin
-//						if(valid);
-//					end
+					READI : begin
+						if(input_read_num >= input_valid_num);	//stall
+						else begin
+							regi[r1] <= mem_input[input_read_num];
+							input_read_num <= input_read_num + 1;
+						end
+					end
+					READF : begin
+						if(input_read_num >= input_valid_num);	//stall
+						else begin
+							regf[r1] <= mem_input[input_read_num];
+							input_read_num <= input_read_num + 1;
+						end
+					end
 					EXIT : begin
 						mode <= MODE_FINISHED;
 					end
