@@ -86,12 +86,12 @@ fpu_div fdiv(
 fpu_sqrt fsqrt(
 	.aclk(CLK),
 	.aresetn(RESET),
-	.s_axis_a_tvalid(in_valids[DIV]),
-	.s_axis_a_tready(in_readies[DIV][0]),
+	.s_axis_a_tvalid(in_valids[SQRT]),
+	.s_axis_a_tready(in_readies[SQRT][0]),
 	.s_axis_a_tdata(a),
-	.m_axis_result_tvalid(result_valids[DIV]),
+	.m_axis_result_tvalid(result_valids[SQRT]),
 	.m_axis_result_tready(result_ready),
-	.m_axis_result_tdata(results[DIV])
+	.m_axis_result_tdata(results[SQRT])
 );
 
 fpu_neg fneg(

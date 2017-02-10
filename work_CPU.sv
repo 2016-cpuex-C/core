@@ -12,7 +12,7 @@ module CPU(
 );
 
 parameter MEM_SIZE = 1<<17;
-parameter MEM_INST_SIZE = 1<<14;
+parameter MEM_INST_SIZE = 1024;
 
 logic signed [31:0] regi[32];
 logic[31:0] regf[32];
@@ -687,19 +687,19 @@ always_ff @(posedge CLK) begin
 						mode <= MODE_IF;
 					end
 					BNEI : begin	//sign?
-						if (regi[r1] != is2) begin
+						if (regi[r1] != i2) begin
 							pc <= i3;
 						end
 						mode <= MODE_IF;
 					end
 					BLTI : begin	//sign?
-						if (regi[r1] < is2) begin
+						if (regi[r1] < i2) begin
 							pc <= i3;
 						end
 						mode <= MODE_IF;
 					end
 					BGTI : begin	//sign?
-						if (regi[r1] > is2) begin
+						if (regi[r1] > i2) begin
 							pc <= i3;
 						end
 						mode <= MODE_IF;

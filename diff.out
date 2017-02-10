@@ -1,0 +1,75 @@
+1,5d0
+< inst_typeを書き換えた
+< 上の方から命令をかき変えて行って(SRL,SLLも書き換え済み)
+< READI,READFのところでinputを書いてなかったことに気づき
+< OLD ver でとりあえず書こうと思ったのでそこで止まっています
+< 
+64a60,73
+> parameter MEM_INPUT_SIZE = 1024;
+> parameter LOG_MEM_INPUT_SIZE = 10;
+> 
+> logic[LOG_MEM_INPUT_SIZE:0] input_valid_num;	//mem_input[0 ~ input_valid_num) is valid
+> logic[31:0] mem_input[MEM_INPUT_SIZE];
+> input_loader iload(
+> 	.CLK(CLK),
+> 	.UART_RX(UART_RX),
+> 	.INITIALIZE(INITIALIZE),
+> 	.queue_t(input_valid_num),
+> 	.mem_input(mem_input)
+> );
+> logic[LOG_MEM_INPUT_SIZE:0] input_read_num;		//next read index
+> 
+98a108,109
+> 		input_read_num <= 0;
+> 		fpu_in_valid <= 0;
+296c307
+< 						regi[r1] <= (regi[r2] >>> regi[r3]);
+---
+> 						regi[r1] <= (regi[r2] >>> i3);
+300c311
+< 						regi[r1] <= (regi[r2] <<< regi[r3]);
+---
+> 						regi[r1] <= (regi[r2] <<< i3);
+461,469c472
+< 					SRLI : begin
+< 						regi[r1] <= (regi[r2] >>> i3);
+< 						mode <= MODE_IF;
+< 					end
+< 					SLLI : begin
+< 						regi[r1] <= (regi[r2] <<< i3);
+< 						mode <= MODE_IF;
+< 					end
+< /*					PRINTI : begin
+---
+> 					PRINTI : begin
+527,529c530,531
+< */
+< 					PRINTC : begin
+< 						if(queue_t + 1 == queue_s) ;
+---
+> 					READI : begin
+> 						if(input_read_num >= input_valid_num);	//stall
+531,534c533,541
+< 							send_queue[queue_t] <= regi[r1][7:0];
+< //							LED[6] <= 1;
+< 							mode <= MODE_IF;
+< 							queue_t <= queue_t + 1;
+---
+> 							regi[r1] <= mem_input[input_read_num];
+> 							input_read_num <= input_read_num + 1;
+> 						end
+> 					end
+> 					READF : begin
+> 						if(input_read_num >= input_valid_num);	//stall
+> 						else begin
+> 							regf[r1] <= mem_input[input_read_num];
+> 							input_read_num <= input_read_num + 1;
+537,542d543
+< //					READI : begin
+< //						if(valid);
+< //					end
+< //					READF : begin
+< //						if(valid);
+< //					end
+559d559
+< 
