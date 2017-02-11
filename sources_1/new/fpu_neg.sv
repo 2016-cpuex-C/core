@@ -9,7 +9,7 @@ module fpu_neg(
 	output logic c_valid
 );
 always_ff @(posedge aclk) begin
-	if(aresetn) begin
+	if(!aresetn) begin
 		c_data <= 0;
 		c_valid <= 0;
 	end

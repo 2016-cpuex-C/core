@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-parameter MEM_INST_SIZE = 1<<14;
+parameter MEM_INST_SIZE = 1024;
 
 module program_loader(
 	input CLK,

@@ -12,7 +12,7 @@ module CPU(
 );
 
 parameter MEM_SIZE = 1<<17;
-parameter MEM_INST_SIZE = 1024;
+parameter MEM_INST_SIZE = 1<<9;
 
 logic signed [31:0] regi[32];
 logic[31:0] regf[32];
@@ -31,7 +31,7 @@ parameter MODE_WB = 6;
 parameter MODE_FINISHED = 7;
 
 typedef enum logic [5:0] {
-SQRT,MOVE,NEG,ADD,
+ZERO,MOVE,NEG,ADD,
 ADDI,SUB,SUBI,MULT,
 MULTI,DIV,DIVI,MOVS,
 NEGS,ADDS,SUBS,MULS,
@@ -56,7 +56,7 @@ program_loader program_loader(CLK,UART_RX,need_program_load,INITIALIZE,ins,pc_in
 
 logic[7:0] send_queue[512];
 logic[8:0] queue_s,queue_t;
-output_manager oman(CLK,INITIALIZE,send_queue,queue_t,  queue_s,UART_TX);
+output_manager oman(CLK,INITIALIZE,send_queue,queue_t,  queue_s,UART_TX,LED);
 
 parameter MEM_INPUT_SIZE = 1024;
 parameter LOG_MEM_INPUT_SIZE = 10;
@@ -108,7 +108,7 @@ logic finished = 0;
 
 always_ff @(posedge CLK) begin
 	if (INITIALIZE) begin
-		LED[7:0] <= 0;
+//		LED[7:0] <= 0;
 		queue_t <= 0;
 		exec_t <= 0;
 		mode <= MODE_INITIAL;
@@ -128,7 +128,7 @@ always_ff @(posedge CLK) begin
 				need_program_load <= 1;
 				if (START_EXEC) begin
 					pc <= pc_init;
-					if(pc_init <= 2) LED[pc_init] <= 1;
+//					if(pc_init == 2) LED[2] <= 1;
 //					LED[pc_init] <= 1;
 					mode <= MODE_IF;
 					need_program_load <= 0;
@@ -159,26 +159,8 @@ always_ff @(posedge CLK) begin
 			end
 			MODE_EX : begin
 				case (inst_id)
-					SQRT : begin
-						unique case (exec_t)
-							0 : begin
-								fpu_a <= regf[r2];
-								fpu_operator <= 6;	//SQRT
-								fpu_in_valid <= 1;
-								exec_t <= 1;
-							end
-							default : begin
-								fpu_in_valid <= 0;
-								if(fpu_result_valid) begin
-									regf[r1] <= fpu_c;
-									exec_t <= 0;
-									mode <= MODE_IF;
-								end
-								else begin
-									exec_t <= exec_t + 1;
-								end
-							end
-						endcase
+					ZERO : begin
+						mode <= MODE_IF;
 					end
 					MOVE : begin
 						regi[r1] <= regi[r2];
@@ -342,8 +324,6 @@ always_ff @(posedge CLK) begin
 						mode <= MODE_IF;
 					end
 					LI : begin
-						if(i2==16'b00000000_00000001) LED[3] <= 1;
-						else LED[4] <= 1;
 						regi[r1] <= i2;
 						mode <= MODE_IF;
 					end
@@ -572,8 +552,7 @@ always_ff @(posedge CLK) begin
 						if(queue_t + 1 == queue_s) ;
 						else begin
 							send_queue[queue_t] <= regi[r1][7:0];
-							if(regi[r1][7:0] == 8'b00000001) LED[5] <= 1;
-							else LED[6] <= 1;
+//							LED[6] <= 1;
 							mode <= MODE_IF;
 							queue_t <= queue_t + 1;
 						end
@@ -732,10 +711,11 @@ always_ff @(posedge CLK) begin
 				endcase
 			end
 			MODE_FINISHED : begin
-				LED[7] <= 1;
+//				LED[7] <= 1;
 			end
 		endcase
 	end
 end
 
 endmodule
+
