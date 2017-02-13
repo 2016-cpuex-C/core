@@ -12,7 +12,7 @@ module CPU(
 );
 
 parameter MEM_SIZE = 1<<17;
-parameter MEM_INST_SIZE = 1024;
+parameter MEM_INST_SIZE = 1<<14;
 
 logic signed [31:0] regi[32];
 logic[31:0] regf[32];
@@ -569,7 +569,7 @@ always_ff @(posedge CLK) begin
 					end
 */
 					PRINTC : begin
-						if(queue_t + 1 == queue_s) ;
+						if(queue_t + 1 == queue_s || (&queue_t & !(|queue_s))) ;
 						else begin
 							send_queue[queue_t] <= regi[r1][7:0];
 							if(regi[r1][7:0] == 8'b00000001) LED[5] <= 1;

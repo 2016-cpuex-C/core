@@ -44,7 +44,7 @@ always_ff @(posedge CLK) begin
 	end
 	else if(proceeding) begin
 		RST<=0;
-	 	if(cntCLK==T/3) begin
+	 	if(cntCLK==T/2) begin
 			case (cntT)
 				0: vals[0]<=latched_IN;
 				1: vals[1]<=latched_IN;

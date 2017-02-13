@@ -15,7 +15,7 @@ always_ff @(posedge CLK) begin
 	end
 	else begin
 		cntCLK<=cntCLK+1;
-		if(cntCLK==T-3) begin
+		if(cntCLK==T-5) begin
 			cntCLK<=0;
 			cntT<=cntT+1;
 		end

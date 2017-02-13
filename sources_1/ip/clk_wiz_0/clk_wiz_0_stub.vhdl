@@ -1,7 +1,7 @@
 -- Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2015.4.2 (lin64) Build 1494164 Fri Feb 26 04:18:54 MST 2016
--- Date        : Tue Dec 20 21:15:06 2016
+-- Date        : Sun Feb 12 06:37:34 2017
 -- Host        : ispc2016 running 64-bit Ubuntu 14.04.4 LTS
 -- Command     : write_vhdl -force -mode synth_stub
 --               /home/tansei/Documents/CPUexp/CoreC/CoreC.srcs/sources_1/ip/clk_wiz_0/clk_wiz_0_stub.vhdl
