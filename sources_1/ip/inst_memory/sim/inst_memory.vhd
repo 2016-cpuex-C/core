@@ -63,7 +63,6 @@ ENTITY inst_memory IS
     addra : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     dina : IN STD_LOGIC_VECTOR(31 DOWNTO 0);
     clkb : IN STD_LOGIC;
-    enb : IN STD_LOGIC;
     addrb : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
     doutb : OUT STD_LOGIC_VECTOR(31 DOWNTO 0)
   );
@@ -221,7 +220,6 @@ ARCHITECTURE inst_memory_arch OF inst_memory IS
   ATTRIBUTE X_INTERFACE_INFO OF addra: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_PORTA ADDR";
   ATTRIBUTE X_INTERFACE_INFO OF dina: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_PORTA DIN";
   ATTRIBUTE X_INTERFACE_INFO OF clkb: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_PORTB CLK";
-  ATTRIBUTE X_INTERFACE_INFO OF enb: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_PORTB EN";
   ATTRIBUTE X_INTERFACE_INFO OF addrb: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_PORTB ADDR";
   ATTRIBUTE X_INTERFACE_INFO OF doutb: SIGNAL IS "xilinx.com:interface:bram:1.0 BRAM_PORTB DOUT";
 BEGIN
@@ -265,11 +263,11 @@ BEGIN
       C_RST_PRIORITY_B => "CE",
       C_RSTRAM_B => 0,
       C_INITB_VAL => "0",
-      C_HAS_ENB => 1,
+      C_HAS_ENB => 0,
       C_HAS_REGCEB => 0,
       C_USE_BYTE_WEB => 0,
       C_WEB_WIDTH => 1,
-      C_WRITE_MODE_B => "WRITE_FIRST",
+      C_WRITE_MODE_B => "READ_FIRST",
       C_WRITE_WIDTH_B => 32,
       C_READ_WIDTH_B => 32,
       C_WRITE_DEPTH_B => 65536,
@@ -287,7 +285,7 @@ BEGIN
       C_EN_ECC_PIPE => 0,
       C_HAS_INJECTERR => 0,
       C_SIM_COLLISION_CHECK => "ALL",
-      C_COMMON_CLK => 0,
+      C_COMMON_CLK => 1,
       C_DISABLE_WARN_BHV_COLL => 0,
       C_EN_SLEEP_PIN => 0,
       C_USE_URAM => 0,
@@ -299,7 +297,7 @@ BEGIN
       C_DISABLE_WARN_BHV_RANGE => 0,
       C_COUNT_36K_BRAM => "58",
       C_COUNT_18K_BRAM => "0",
-      C_EST_POWER_SUMMARY => "Estimated Power for IP     :     68.933328 mW"
+      C_EST_POWER_SUMMARY => "Estimated Power for IP     :     70.280784 mW"
     )
     PORT MAP (
       clka => clka,
@@ -311,7 +309,7 @@ BEGIN
       dina => dina,
       clkb => clkb,
       rstb => '0',
-      enb => enb,
+      enb => '0',
       regceb => '0',
       web => STD_LOGIC_VECTOR(TO_UNSIGNED(0, 1)),
       addrb => addrb,

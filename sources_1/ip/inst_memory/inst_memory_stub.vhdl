@@ -1,7 +1,7 @@
 -- Copyright 1986-2015 Xilinx, Inc. All Rights Reserved.
 -- --------------------------------------------------------------------------------
 -- Tool Version: Vivado v.2015.4.2 (lin64) Build 1494164 Fri Feb 26 04:18:54 MST 2016
--- Date        : Mon Feb 13 16:22:07 2017
+-- Date        : Mon Feb 13 16:33:50 2017
 -- Host        : ispc2016 running 64-bit Ubuntu 14.04.4 LTS
 -- Command     : write_vhdl -force -mode synth_stub
 --               /home/tansei/Documents/CPUexp/CoreC/CoreC.srcs/sources_1/ip/inst_memory/inst_memory_stub.vhdl
@@ -19,7 +19,6 @@ entity inst_memory is
     addra : in STD_LOGIC_VECTOR ( 15 downto 0 );
     dina : in STD_LOGIC_VECTOR ( 31 downto 0 );
     clkb : in STD_LOGIC;
-    enb : in STD_LOGIC;
     addrb : in STD_LOGIC_VECTOR ( 15 downto 0 );
     doutb : out STD_LOGIC_VECTOR ( 31 downto 0 )
   );
@@ -30,7 +29,7 @@ architecture stub of inst_memory is
 attribute syn_black_box : boolean;
 attribute black_box_pad_pin : string;
 attribute syn_black_box of stub : architecture is true;
-attribute black_box_pad_pin of stub : architecture is "clka,wea[0:0],addra[15:0],dina[31:0],clkb,enb,addrb[15:0],doutb[31:0]";
+attribute black_box_pad_pin of stub : architecture is "clka,wea[0:0],addra[15:0],dina[31:0],clkb,addrb[15:0],doutb[31:0]";
 attribute x_core_info : string;
 attribute x_core_info of stub : architecture is "blk_mem_gen_v8_3_1,Vivado 2015.4.2";
 begin

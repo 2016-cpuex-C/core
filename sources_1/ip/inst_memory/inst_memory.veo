@@ -60,7 +60,6 @@ inst_memory your_instance_name (
   .addra(addra),  // input wire [15 : 0] addra
   .dina(dina),    // input wire [31 : 0] dina
   .clkb(clkb),    // input wire clkb
-  .enb(enb),      // input wire enb
   .addrb(addrb),  // input wire [15 : 0] addrb
   .doutb(doutb)  // output wire [31 : 0] doutb
 );

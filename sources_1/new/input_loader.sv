@@ -7,6 +7,7 @@ module input_loader(
 	input CLK,
 	input UART_RX,
 	input INITIALIZE,
+	input needed,
 	output logic[LOG_MEM_INPUT_SIZE:0] queue_t,		//done: [0,queue_t)
 	output logic[31:0] mem_input[MEM_INPUT_SIZE]
 //	output logic[7:0] LED
@@ -26,7 +27,7 @@ always_ff @(posedge CLK) begin
 		shift_itr <= 0;
 //		LED <= 0;
 	end
-	else begin
+	else if(needed) begin
 		if(valid) begin
 			already_valid<=1;
 		end

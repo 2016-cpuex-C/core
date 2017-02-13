@@ -17,7 +17,25 @@ parameter MEM_INST_SIZE = 1<<14;
 logic signed [31:0] regi[32];
 logic[31:0] regf[32];
 logic[31:0] memory[MEM_SIZE];
-logic[31:0] ins[MEM_INST_SIZE];
+
+//logic[31:0] ins[MEM_INST_SIZE];
+logic[15:0] write_addr;
+logic[31:0] write_data;
+logic write_enable;
+logic[15:0] read_addr;
+logic[31:0] read_data;
+
+inst_memory inst_memory(
+	.addra(write_addr),
+	.clka(CLK),
+	.dina(write_data),
+	.wea(write_enable),
+	.addrb(read_addr),
+	.clkb(CLK),
+	.doutb(read_data)
+);
+
+
 shortint unsigned pc;
 integer pc_init;
 
@@ -49,10 +67,22 @@ CMPI,CMPS,CVTSW,CVTWS,
 MADDS,BNEI,BLTI,BGTI
 } inst_type;
 
+integer if_t = 0;
 integer exec_t = 0;
 integer mode = MODE_INITIAL;
 logic need_program_load = 0;
-program_loader program_loader(CLK,UART_RX,need_program_load,INITIALIZE,ins,pc_init);
+//program_loader program_loader(CLK,UART_RX,need_program_load,INITIALIZE,ins,pc_init);
+program_loader program_loader(
+	.CLK(CLK),
+	.UART_RX(UART_RX),
+	.needed(need_program_load),
+	.INITIALIZE(INITIALIZE),
+//	.ins(ins),
+	.pc_init(pc_init),
+	.write_addr(write_addr),
+	.write_data(write_data),
+	.write_enable(write_enable)
+);
 
 logic[7:0] send_queue[512];
 logic[8:0] queue_s,queue_t;
@@ -63,10 +93,12 @@ parameter LOG_MEM_INPUT_SIZE = 10;
 
 logic[LOG_MEM_INPUT_SIZE:0] input_valid_num;	//mem_input[0 ~ input_valid_num) is valid
 logic[31:0] mem_input[MEM_INPUT_SIZE];
+logic need_input_load = 0;
 input_loader iload(
 	.CLK(CLK),
 	.UART_RX(UART_RX),
 	.INITIALIZE(INITIALIZE),
+	.needed(need_input_load),
 	.queue_t(input_valid_num),
 	.mem_input(mem_input)
 );
@@ -110,9 +142,11 @@ always_ff @(posedge CLK) begin
 	if (INITIALIZE) begin
 		LED[7:0] <= 0;
 		queue_t <= 0;
+		if_t <= 0;
 		exec_t <= 0;
 		mode <= MODE_INITIAL;
 		need_program_load <= 0;
+		need_input_load <= 0;
 		input_read_num <= 0;
 		fpu_in_valid <= 0;
 		
@@ -132,13 +166,30 @@ always_ff @(posedge CLK) begin
 //					LED[pc_init] <= 1;
 					mode <= MODE_IF;
 					need_program_load <= 0;
+					need_input_load <= 1;
 				end
 			end
 			MODE_IF : begin
 //				LED[1] <= 1;
-				ir <= ins[pc];
-				pc <= pc+1;
-				mode <= MODE_ID;
+//				ir <= ins[pc];
+				unique case (if_t)
+					0 : begin
+						read_addr <= pc;
+						if_t <= 1;
+					end
+					1 : begin
+						if_t <= 2;
+					end
+					2 : begin
+						if_t <= 3;
+					end
+					3 : begin
+						ir <= read_data;
+						if_t <= 0;
+						pc <= pc+1;
+						mode <= MODE_ID;
+					end
+				endcase
 			end
 			MODE_ID : begin
 				inst_id <= ir[31:26];
@@ -348,28 +399,68 @@ always_ff @(posedge CLK) begin
 						mode <= MODE_IF;
 					end
 					LA : begin
-						regi[r1] <= ins[i2];
-						mode <= MODE_IF;
-//						case (exec_t)
-//							0 : begin
-//								;
-//							end
-//							1 : begin
-//								mode <= MODE_IF;
-//							end
-//						endcase
+//						regi[r1] <= ins[i2];
+						unique case (if_t)
+							0 : begin
+								read_addr <= i2;
+								if_t <= 1;
+							end
+							1 : begin
+								if_t <= 2;
+							end
+							2 : begin
+								if_t <= 3;
+							end
+							3 : begin
+								regi[r1] <= read_data;
+								if_t <= 0;
+								mode <= MODE_IF;
+							end
+						endcase
 					end
-					LWL : begin	//?
-						regi[r1] <= ins[i2];
-						mode <= MODE_IF;
+					LWL : begin			//same as LA
+//						regi[r1] <= ins[i2];
+						unique case (if_t)
+							0 : begin
+								read_addr <= i2;
+								if_t <= 1;
+							end
+							1 : begin
+								if_t <= 2;
+							end
+							2 : begin
+								if_t <= 3;
+							end
+							3 : begin
+								regi[r1] <= read_data;
+								if_t <= 0;
+								mode <= MODE_IF;
+							end
+						endcase
 					end
 					LWR : begin
 						regi[r1] <= memory[regi[r2] + i3];
 						mode <= MODE_IF;
 					end
 					LSL : begin
-						regf[r1] <= ins[i2];
-						mode <= MODE_IF;
+//						regf[r1] <= ins[i2];
+						unique case (if_t)
+							0 : begin
+								read_addr <= i2;
+								if_t <= 1;
+							end
+							1 : begin
+								if_t <= 2;
+							end
+							2 : begin
+								if_t <= 3;
+							end
+							3 : begin
+								regf[r1] <= read_data;
+								if_t <= 0;
+								mode <= MODE_IF;
+							end
+						endcase
 					end
 					LSR : begin
 						regf[r1] <= memory[regi[r2] + i3];
