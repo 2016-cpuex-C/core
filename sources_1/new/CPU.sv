@@ -385,7 +385,8 @@ always_ff @(posedge CLK) begin
 						endcase
 					end
 					SRL : begin
-						regi[r1] <= (regi[r2] >> regi[r3]);
+						if(regi[r3] >= 32) regi[r1] <= 0;
+						else regi[r1] <= (regi[r2] >> regi[r3]);
 						mode <= MODE_IF;
 					end
 					SLL : begin
@@ -593,7 +594,8 @@ always_ff @(posedge CLK) begin
 						mode <= MODE_IF;
 					end
 					SRLI : begin
-						regi[r1] <= (regi[r2] >> i3);
+						if(i3 >= 32) regi[r1] <= 0;
+						else regi[r1] <= (regi[r2] >> i3);
 						mode <= MODE_IF;
 					end
 					SLLI : begin
