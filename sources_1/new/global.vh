@@ -7,5 +7,5 @@
 
 `ifndef global
 	`define global
-	localparam T = 87;
+	localparam T = 260;
 `endif
